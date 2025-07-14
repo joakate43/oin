@@ -1,0 +1,102 @@
+-- LocalScript que cria uma GUI listando todas as Tools do jogo, com botão "Pegar" para pegar cada uma.
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local backpack = player:WaitForChild("Backpack")
+
+local function findAllTools(root)
+    local tools = {}
+    local function recurse(parent)
+        for _, child in pairs(parent:GetChildren()) do
+            if child:IsA("Tool") then
+                table.insert(tools, child)
+            end
+            recurse(child)
+        end
+    end
+    recurse(root)
+    return tools
+end
+
+-- Criar GUI
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ToolsPickerGui"
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 300, 0, 400)
+Frame.Position = UDim2.new(0, 20, 0, 50)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Padding = UDim.new(0, 4)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Parent = Frame
+
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Size = UDim2.new(1, -10, 1, -10)
+ScrollingFrame.Position = UDim2.new(0, 5, 0, 5)
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollingFrame.ScrollBarThickness = 6
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.Parent = Frame
+
+local UIListLayoutScroll = Instance.new("UIListLayout")
+UIListLayoutScroll.Parent = ScrollingFrame
+UIListLayoutScroll.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayoutScroll.Padding = UDim.new(0, 6)
+
+local function updateCanvasSize()
+    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayoutScroll.AbsoluteContentSize.Y + 10)
+end
+
+UIListLayoutScroll:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
+
+-- Buscar todas as ferramentas no jogo
+
+local allTools = findAllTools(game)
+
+-- Função para criar botão para cada tool
+
+for i, tool in ipairs(allTools) do
+    local ToolName = tool.Name
+
+    local toolFrame = Instance.new("Frame")
+    toolFrame.Size = UDim2.new(1, 0, 0, 30)
+    toolFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    toolFrame.Parent = ScrollingFrame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.Text = ToolName
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 18
+    label.Parent = toolFrame
+
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0.3, -10, 1, -6)
+    button.Position = UDim2.new(0.7, 10, 0, 3)
+    button.Text = "Pegar"
+    button.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+    button.TextColor3 = Color3.new(1,1,1)
+    button.Font = Enum.Font.SourceSansBold
+    button.TextSize = 18
+    button.Parent = toolFrame
+
+    button.MouseButton1Click:Connect(function()
+        if tool and tool.Parent then
+            local clone = tool:Clone()
+            clone.Parent = backpack
+            -- Opcional: notificar o jogador
+            print("Você pegou a tool:", ToolName)
+        else
+            print("Tool não encontrada no momento.")
+        end
+    end)
+end
